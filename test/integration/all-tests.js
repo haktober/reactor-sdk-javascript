@@ -17,7 +17,7 @@ import helpers from './helpers';
 beforeAll(async function() {
   console.group('Reactor JavaScript SDK Integration Tests');
   await helpers.cleanUpTestProperties();
-});
+}, 300000);
 
 // runs after all suites
 afterAll(function() {
