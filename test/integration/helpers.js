@@ -407,6 +407,59 @@ const helpers = {
     );
   },
 
+  // forEachEntityInList invokes `callback` on each entity listed in all the
+  // pages returned by
+  //  ```
+  //    listPageFn({ 'page[number]': <NEXT_PAGE_NUMBER>, 'page[size]': 100 });
+  // ```
+  // In other words, forEachEntity passes to listPageFn the query parameters
+  // that pertain to paging. Before calling the desired Reactor listFooForBar()
+  // method, listPageFn should merge those paging parameters with any query
+  // parameters it needs.
+  //
+  // listPageFn will be called for successive pages until the list is exhausted.
+  //
+  // The following is a usage example. Given a property ID and search string, it
+  // returns an Array containing the ID's of all Libraries on that Property for
+  // which the Library name contains the search string.
+  //
+  //   async function getIdsOfLibrariesWhoseNameContains(propertyId, searchString) {
+  //     const ids = [];
+  //     const query = { 'filter[name]': 'CONTAINS ' + searchString };
+  //     await helpers.forEachEntityInList(
+  //       // This function gets pages using a Reactor listFooForBar method:
+  //       function(paging) {
+  //         Object.assign(query, paging); // merge in the paging query parameters
+  //         return reactor.listLibrariesForProperty(propertyId, query);
+  //       },
+  //       // This function gets called on each individual Foo in the list of
+  //       // Foos for Bar. It may be called up to 100 times for each page
+  //       // produced by the listPageFn.
+  //       property => ids.push(property.id)
+  //     );
+  //   }
+  async forEachEntityInList(listPageFn, callback) {
+    try {
+      /*eslint-disable camelcase*/
+      let pagination = { next_page: 1 };
+      do {
+        const listResponse = await listPageFn({
+          'page[number]': pagination.next_page,
+          'page[size]': 100
+        });
+        const entities = listResponse.data;
+        expect(entities).toBeDefined();
+        for (const entity of entities) {
+          await callback(entity);
+        }
+        pagination = listResponse.meta && listResponse.meta.pagination;
+      } while (pagination.next_page);
+    } catch (error) {
+      helpers.reportError(error);
+    }
+    /*eslint-enable camelcase*/
+  },
+
   describe(description, suiteDefinition) {
     describe(description, function() {
       beforeAll(() => console.groupCollapsed(description));
