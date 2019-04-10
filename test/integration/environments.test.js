@@ -127,23 +127,19 @@ helpers.describe('Environment API', function() {
 
   // List Builds
   // https://developer.adobelaunch.com/api/environments/builds/
-  helpers.it(
-    "lists an Environment's builds",
-    async function() {
-      // Create an library, adapter, environment
-      const lib = await helpers.createTestLibrary(theProperty.id, 'Jack');
-      const env = await helpers.makeLibraryEnvironment(lib, 'Jill', 'Akamai');
-      await helpers.addCoreToLibrary(theProperty, lib);
-      const buildId = await helpers.buildLibrary(lib);
-      if (buildId === null) return;
+  helpers.it("lists an Environment's builds", async function() {
+    // Create an library, adapter, environment
+    const lib = await helpers.createTestLibrary(theProperty.id, 'Jack');
+    const env = await helpers.makeLibraryEnvironment(lib, 'Jill', 'Akamai');
+    await helpers.addCoreToLibrary(theProperty, lib);
+    const buildId = await helpers.buildLibrary(lib);
+    if (buildId === null) return;
 
-      // test listBuildsForEnvironment
-      const response = await reactor.listBuildsForEnvironment(env.id);
-      const allIds = response.data.map(build => build.id);
-      expect(allIds).toContain(buildId);
-    }
-    //300000
-  );
+    // test listBuildsForEnvironment
+    const response = await reactor.listBuildsForEnvironment(env.id);
+    const allIds = response.data.map(build => build.id);
+    expect(allIds).toContain(buildId);
+  });
 
   // List Environments for a Property
   // https://developer.adobelaunch.com/api/environments/list/

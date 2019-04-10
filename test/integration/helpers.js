@@ -340,7 +340,7 @@ const helpers = {
     expect(buildId).toMatch(helpers.idBL);
 
     // wait for build to complete
-    const totalWait = 30000; // in milliseconds
+    const totalWait = 300000; // in milliseconds
     const pollInterval = 1000; // in milliseconds
     for (var i = 0; i < totalWait; i += pollInterval) {
       await helpers.sleep(pollInterval);
@@ -373,38 +373,25 @@ const helpers = {
     helpers.specName = groupName;
     console.groupCollapsed(groupName);
     try {
-      /*eslint-disable camelcase*/
-      let pagination = { next_page: 1 };
-      do {
-        const listResponse = await reactor.listPropertiesForCompany(
-          reactor.myCompanyId,
-          {
-            'page[number]': pagination.next_page,
-            'page[size]': 100
-          }
-        );
-
-        const properties = listResponse.data;
-        expect(properties).toBeDefined();
-        for (const property of properties) {
-          expect(property.id).toMatch(helpers.idPR);
-          const propName = property.attributes.name;
-          if (nameMatcherForTestProperties.test(propName)) {
-            console.debug(`cleanup: deleting ${property.id} "${propName}"`);
-            await reactor.deleteProperty(property.id);
-            console.debug(`cleanup: deleted ${property.id} "${propName}"`);
-          } else {
-            console.debug(`cleanup: not deleting ${property.id} "${propName}"`);
-          }
-        }
-
-        pagination = listResponse.meta && listResponse.meta.pagination;
-      } while (pagination.next_page);
+      await helpers.forEachEntityInList(
+        paging => reactor.listPropertiesForCompany(helpers.companyId, paging),
+        helpers.deleteTestProperty
+      );
     } catch (error) {
       helpers.reportError(error);
     }
-    /*eslint-enable camelcase*/
     console.groupEnd(groupName);
+  },
+
+  async deleteTestProperty(property) {
+    expect(property.id).toMatch(helpers.idPR);
+    const propName = property.attributes.name;
+    if (nameMatcherForTestProperties.test(propName)) {
+      console.debug(`cleanup: deleting ${property.id} "${propName}"`);
+      await reactor.deleteProperty(property.id);
+    } else {
+      console.debug(`cleanup: not deleting ${property.id} "${propName}"`);
+    }
   },
 
   async createTestRule(property, ruleName) {
@@ -500,9 +487,6 @@ function toLocalISOString(date) {
     pad(date.getMinutes()) +
     ':' +
     pad(date.getSeconds()) +
-    '.' +
-    (date.getMilliseconds() < 100 ? '0' : '') +
-    pad(date.getMilliseconds()) +
     dif +
     pad(tzo / 60) +
     ':' +
