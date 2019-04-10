@@ -64,16 +64,6 @@ helpers.describe('Rule API', function() {
     }
   });
 
-  var originalTimeout;
-  beforeEach(function() {
-    originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
-  });
-
-  afterEach(function() {
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;
-  });
-
   // Some tests need a lot of supporting infrastructure. Since it is expensive
   // to set up, they share that infrastructure. It is stored in these variables,
   // which are initialized by initializeInfrastructure().

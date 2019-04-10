@@ -512,7 +512,21 @@ function toLocalISOString(date) {
 
 function makeNameForTestObject(objectType, baseName) {
   const date = toLocalISOString(new Date());
-  return `${baseName} (Integration Testing ${objectType} / ${date})`;
+  const rand = window.crypto
+    .getRandomValues(new Uint32Array(1))[0]
+    .toString(16);
+  return `${baseName} (Integration Testing ${objectType} / ${date}) ${rand}`;
+}
+
+const testingProperties = new Map();
+
+async function findOrMakeTestingProperty(entityKind) {
+  if (!testingProperties.has(entityKind)) {
+    const basename = `${entityKind}-Testing Base`;
+    const property = await helpers.createTestProperty(basename);
+    testingProperties.set(entityKind, property);
+  }
+  return testingProperties.get(entityKind);
 }
 
 async function getExtensionPackageByName(epName, platform = 'web') {

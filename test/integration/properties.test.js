@@ -28,15 +28,6 @@ helpers.describe('Property API', function() {
     }
   });
 
-  beforeEach(function() {
-    originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
-  });
-
-  afterEach(function() {
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;
-  });
-
   // Create a Property
   // https://developer.adobelaunch.com/api/properties/create/
   helpers.it('creates a new Property', function() {
@@ -79,53 +70,62 @@ helpers.describe('Property API', function() {
 
   // List Properties for a Company
   // https://developer.adobelaunch.com/api/properties/list/
-  helpers.it('lists all Properties', async function() {
-    async function getPropertyByIdAndCheckName(id, name) {
-      const response = await reactor.getProperty(id);
-      expect(response.data.attributes.name).toMatch(name);
-    }
-
-    // Create four Properties
-    const atlanta = await helpers.createTestProperty('Atlanta');
-    const barstow = await helpers.createTestProperty('Barstow');
-    const chicago = await helpers.createTestProperty('Chicago');
-    const detroit = await helpers.createTestProperty('Detroit');
-    expect(atlanta.attributes.name).toMatch(/^atlanta/i);
-    expect(barstow.attributes.name).toMatch(/^barstow/i);
-    expect(chicago.attributes.name).toMatch(/^chicago/i);
-    expect(detroit.attributes.name).toMatch(/^detroit/i);
-
-    // Make sure all four show up in the list of Properties on the company
-    const listResponse = await reactor.listPropertiesForCompany(
-      helpers.companyId
-    );
-    const allIds = listResponse.data.map(resource => resource.id);
-    expect(allIds).toContain(atlanta.id);
-    expect(allIds).toContain(barstow.id);
-    expect(allIds).toContain(chicago.id);
-    expect(allIds).toContain(detroit.id);
-    expect(allIds).toContain(newProperty.id);
-
-    // Make sure you can get each one of the Properties
-    await getPropertyByIdAndCheckName(atlanta.id, 'Atlanta');
-    await getPropertyByIdAndCheckName(barstow.id, 'Barstow');
-    await getPropertyByIdAndCheckName(chicago.id, 'Chicago');
-    await getPropertyByIdAndCheckName(detroit.id, 'Detroit');
-
-    // Test filtering Properties by name
-    const filteredResponse = await reactor.listPropertiesForCompany(
-      helpers.companyId,
-      {
-        'filter[name]': 'LIKE Detroit,LIKE Barstow'
+  helpers.it(
+    'lists all Properties',
+    async function() {
+      async function getPropertyByIdAndCheckName(id, name) {
+        const response = await reactor.getProperty(id);
+        expect(response.data.attributes.name).toMatch(name);
       }
-    );
-    const twoIds = filteredResponse.data.map(resource => resource.id);
-    expect(twoIds).not.toContain(atlanta.id);
-    expect(twoIds).toContain(barstow.id);
-    expect(twoIds).not.toContain(chicago.id);
-    expect(twoIds).toContain(detroit.id);
-    expect(twoIds).not.toContain(newProperty.id);
-  });
+
+      // Create four Properties
+      const atlanta = await helpers.createTestProperty('Atlanta');
+      const barstow = await helpers.createTestProperty('Barstow');
+      const chicago = await helpers.createTestProperty('Chicago');
+      const detroit = await helpers.createTestProperty('Detroit');
+      expect(atlanta.attributes.name).toMatch(/^atlanta/i);
+      expect(barstow.attributes.name).toMatch(/^barstow/i);
+      expect(chicago.attributes.name).toMatch(/^chicago/i);
+      expect(detroit.attributes.name).toMatch(/^detroit/i);
+
+      // Make sure all four show up in the list of Properties on the company
+      const companyId = helpers.companyId;
+      const allIds = [];
+      await helpers.forEachEntityInList(
+        paging => reactor.listPropertiesForCompany(helpers.companyId, paging),
+        property => allIds.push(property.id)
+      );
+      expect(allIds).toContain(atlanta.id, 'Atlanta is missing');
+      expect(allIds).toContain(barstow.id, 'Barstow is missing');
+      expect(allIds).toContain(chicago.id, 'Chicago is missing');
+      expect(allIds).toContain(detroit.id, 'Detroit is missing');
+      expect(allIds).toContain(newProperty.id);
+
+      // Make sure you can get each one of the Properties
+      await getPropertyByIdAndCheckName(atlanta.id, 'Atlanta');
+      await getPropertyByIdAndCheckName(barstow.id, 'Barstow');
+      await getPropertyByIdAndCheckName(chicago.id, 'Chicago');
+      await getPropertyByIdAndCheckName(detroit.id, 'Detroit');
+
+      // Test filtering Properties by name
+      const idsForBarstowAndDetroit = [];
+      const query = { 'filter[name]': 'LIKE Detroit,LIKE Barstow' };
+      await helpers.forEachEntityInList(
+        paging =>
+          reactor.listPropertiesForCompany(
+            helpers.companyId,
+            Object.assign(query, paging)
+          ),
+        property => idsForBarstowAndDetroit.push(property.id)
+      );
+      expect(idsForBarstowAndDetroit).not.toContain(atlanta.id);
+      expect(idsForBarstowAndDetroit).toContain(barstow.id);
+      expect(idsForBarstowAndDetroit).not.toContain(chicago.id);
+      expect(idsForBarstowAndDetroit).toContain(detroit.id);
+      expect(idsForBarstowAndDetroit).not.toContain(newProperty.id);
+    }
+    //50031
+  );
 
   // Update a Property
   // https://developer.adobelaunch.com/api/properties/update/
