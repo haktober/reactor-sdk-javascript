@@ -13,24 +13,30 @@ governing permissions and limitations under the License.
 // Clean up any cobwebs from the last run of the integration tests
 import helpers from './helpers';
 
-// var myReporter = {
-//   specDone: function(result) {
-//     var passedCount = result.passedExpectations.length;
-//     var failedCount = result.failedExpectations.length;
-//     if (failedCount === 0) return;
-//     console.log(
-//       'Report: Spec "' + result.description + '" was ' + result.status
-//     );
-//     console.log('Passed:', passedCount, 'Failed:', failedCount);
-//     for (var i = 0; i < result.failedExpectations.length; i++) {
-//       console.log(
-//         'Failure: ' + result.failedExpectations[i].message,
-//         result.failedExpectations[i].stack
-//       );
-//     }
-//   }
-// };
-// jasmine.getEnv().addReporter(myReporter);
+// As soon as a test fails, log its details to the console.
+// When Jasmine first detects a failure, its standard reporter only shows a red
+// X; the details are not shown until all tests have completed.  This code logs
+// the failure details to the console immediately, so you can start working on
+// debugging early failures while the rest of the tests run.
+var consoleReporter = {
+  specDone: function(result) {
+    var passedCount = result.passedExpectations.length;
+    var failedCount = result.failedExpectations.length;
+    if (failedCount === 0) return;
+    console.error(
+      `Spec ${result.status}: "${result.description}";`,
+      `tests passed: ${passedCount}, failed: ${failedCount}`
+    );
+    for (var i = 0; i < result.failedExpectations.length; i++) {
+      console.error(
+        'Failure:',
+        result.failedExpectations[i].message,
+        result.failedExpectations[i].stack
+      );
+    }
+  }
+};
+jasmine.getEnv().addReporter(consoleReporter);
 
 function MsecsToHMS(totalMilliseconds) {
   var totalSeconds = totalMilliseconds / 1000.0;
