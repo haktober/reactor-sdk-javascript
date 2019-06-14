@@ -48,7 +48,7 @@
     "integration:build:node": "npx parcel build --no-minify --public-url=. -d tmp.tests/integration-in-node/ -o index.js test/integration/integration-tests-library-sdk.js --target node",
     "integration:build": "npm-run-all integration:clean integration:build:environment --print-label --parallel integration:build:*",
     "integration:run": "node scripts/check-version && open http://localhost:5000/integration-library-sdk/ && open http://localhost:5000/integration-bundled-sdk && NODE_TLS_REJECT_UNAUTHORIZED=0 npx jasmine tmp.tests/integration-in-node/index.js",
-    "unit-tests": "npm-run-all unit:lint unit:build unit:run",
+    "unit-tests": "npm-run-all src:build unit:lint unit:build unit:run",
     "integration-tests": "npm-run-all integration:lint integration:build integration:run",
     "all-tests": "npm-run-all src:lint src:build --print-label --parallel unit-tests integration-tests",
     "src-watch": "nodemon --watch src/ --watch package.json --exec npm-run-all src:lint src:build",
